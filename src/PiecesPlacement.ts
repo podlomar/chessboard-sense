@@ -167,6 +167,20 @@ export class PiecesPlacement {
     return new PiecesPlacement(newPieces);
   }
 
+  public putRank(rank: Rank, pieces: (ChessPiece | null)[]): PiecesPlacement {
+    if (pieces.length !== 8) {
+      throw new Error('Must provide exactly 8 pieces for the rank');
+    }
+
+    const newPieces = [...this.pieces];
+    const startIndex = (8 - rank) * 8;
+    for (let i = 0; i < 8; i++) {
+      newPieces[startIndex + i] = pieces[i];
+    }
+
+    return new PiecesPlacement(newPieces);
+  }
+
   public toFen(): string {
     const ranks: string[] = [];
     for (let rank = 0; rank < 8; rank++) {
