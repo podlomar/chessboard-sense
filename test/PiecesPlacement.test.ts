@@ -210,6 +210,98 @@ describe('PiecesPlacement', () => {
     });
   });
 
+  describe('putRank()', () => {
+    it('should set an entire rank with pieces', () => {
+      const empty = PiecesPlacement.empty();
+      const withRank = empty.putRank(1, ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']);
+
+      expect(withRank.at('a1')).to.equal('R');
+      expect(withRank.at('b1')).to.equal('N');
+      expect(withRank.at('c1')).to.equal('B');
+      expect(withRank.at('d1')).to.equal('Q');
+      expect(withRank.at('e1')).to.equal('K');
+      expect(withRank.at('f1')).to.equal('B');
+      expect(withRank.at('g1')).to.equal('N');
+      expect(withRank.at('h1')).to.equal('R');
+    });
+
+    it('should set rank with null values for empty squares', () => {
+      const empty = PiecesPlacement.empty();
+      const withRank = empty.putRank(4, ['P', null, null, null, null, null, null, 'P']);
+
+      expect(withRank.at('a4')).to.equal('P');
+      expect(withRank.at('b4')).to.be.null;
+      expect(withRank.at('c4')).to.be.null;
+      expect(withRank.at('d4')).to.be.null;
+      expect(withRank.at('e4')).to.be.null;
+      expect(withRank.at('f4')).to.be.null;
+      expect(withRank.at('g4')).to.be.null;
+      expect(withRank.at('h4')).to.equal('P');
+    });
+
+    it('should replace existing rank', () => {
+      const initial = PiecesPlacement.initial();
+      const modified = initial.putRank(2, [null, null, null, null, null, null, null, null]);
+
+      // Rank 2 should be empty
+      expect(modified.at('a2')).to.be.null;
+      expect(modified.at('e2')).to.be.null;
+      expect(modified.at('h2')).to.be.null;
+
+      // Other ranks should be unchanged
+      expect(modified.at('a1')).to.equal('R');
+      expect(modified.at('e1')).to.equal('K');
+    });
+
+    it('should work with all ranks 1-8', () => {
+      const empty = PiecesPlacement.empty();
+      const pieces: ('p' | null)[] = ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'];
+
+      for (let rank = 1; rank <= 8; rank++) {
+        const withRank = empty.putRank(rank as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8, pieces);
+
+        // Check all squares in the rank
+        for (const file of ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']) {
+          expect(withRank.at(`${file}${rank}` as Square)).to.equal('p');
+        }
+      }
+    });
+
+    it('should preserve immutability', () => {
+      const placement1 = PiecesPlacement.empty();
+      const placement2 = placement1.putRank(1, ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']);
+
+      expect(placement1.at('e1')).to.be.null;
+      expect(placement2.at('e1')).to.equal('K');
+    });
+
+    it('should throw error if not exactly 8 pieces provided', () => {
+      const empty = PiecesPlacement.empty();
+
+      expect(() => empty.putRank(1, ['R', 'N', 'B'])).to.throw(
+        'Must provide exactly 8 pieces for the rank',
+      );
+
+      expect(() => empty.putRank(1, ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R', 'R'])).to.throw(
+        'Must provide exactly 8 pieces for the rank',
+      );
+
+      expect(() => empty.putRank(1, [])).to.throw(
+        'Must provide exactly 8 pieces for the rank',
+      );
+    });
+
+    it('should allow building a position rank by rank', () => {
+      const position = PiecesPlacement.empty()
+        .putRank(1, ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'])
+        .putRank(2, ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'])
+        .putRank(7, ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'])
+        .putRank(8, ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r']);
+
+      expect(position.toFen()).to.equal('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR');
+    });
+  });
+
   describe('toFen()', () => {
     it('should convert initial position to FEN', () => {
       const placement = PiecesPlacement.initial();
