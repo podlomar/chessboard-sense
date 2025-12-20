@@ -1,0 +1,6 @@
+{
+  "require": "tsx/cjs",
+  "extensions": ["ts"],
+  "spec": ["test/**/*.test.ts"],
+  "node-option": ["import=tsx"]
+}
