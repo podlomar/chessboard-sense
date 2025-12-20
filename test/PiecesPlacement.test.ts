@@ -1,6 +1,12 @@
-import { describe, it } from 'mocha';
 import { expect } from 'chai';
-import { PiecesPlacement, algebraicToIndex, parsePiece, parseSquare } from '../src/PiecesPlacement.js';
+import { describe, it } from 'mocha';
+import {
+  PiecesPlacement,
+  type Square,
+  algebraicToIndex,
+  parsePiece,
+  parseSquare,
+} from '../src/PiecesPlacement.js';
 
 describe('PiecesPlacement', () => {
   describe('empty()', () => {
@@ -39,19 +45,19 @@ describe('PiecesPlacement', () => {
 
       // Check white pawns (rank 2)
       for (const file of ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']) {
-        expect(placement.at(`${file}2` as any)).to.equal('P');
+        expect(placement.at(`${file}2` as Square)).to.equal('P');
       }
 
       // Check empty squares (ranks 3-6)
       for (const rank of [3, 4, 5, 6]) {
         for (const file of ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']) {
-          expect(placement.at(`${file}${rank}` as any)).to.be.null;
+          expect(placement.at(`${file}${rank}` as Square)).to.be.null;
         }
       }
 
       // Check black pawns (rank 7)
       for (const file of ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']) {
-        expect(placement.at(`${file}7` as any)).to.equal('p');
+        expect(placement.at(`${file}7` as Square)).to.equal('p');
       }
 
       // Check black pieces (rank 8)
@@ -121,7 +127,9 @@ describe('PiecesPlacement', () => {
     it('should throw error for FEN with incorrect square count', () => {
       const fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBN';
 
-      expect(() => PiecesPlacement.fromFen(fen)).to.throw('Invalid FEN: board must have exactly 64 squares');
+      expect(() => PiecesPlacement.fromFen(fen)).to.throw(
+        'Invalid FEN: board must have exactly 64 squares',
+      );
     });
 
     it('should throw error for empty FEN', () => {
@@ -218,18 +226,14 @@ describe('PiecesPlacement', () => {
     });
 
     it('should convert position after e4 to FEN', () => {
-      const placement = PiecesPlacement.initial()
-        .put('e2', null)
-        .put('e4', 'P');
+      const placement = PiecesPlacement.initial().put('e2', null).put('e4', 'P');
       const fen = placement.toFen();
 
       expect(fen).to.equal('rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR');
     });
 
     it('should handle consecutive empty squares', () => {
-      const placement = PiecesPlacement.empty()
-        .put('a1', 'K')
-        .put('h1', 'R');
+      const placement = PiecesPlacement.empty().put('a1', 'K').put('h1', 'R');
       const fen = placement.toFen();
 
       expect(fen).to.equal('8/8/8/8/8/8/8/K6R');
@@ -363,9 +367,7 @@ describe('PiecesPlacement', () => {
     });
 
     it('should display mixed pieces and empty squares', () => {
-      const placement = PiecesPlacement.empty()
-        .put('e4', 'P')
-        .put('e5', 'p');
+      const placement = PiecesPlacement.empty().put('e4', 'P').put('e5', 'p');
       const str = placement.toString();
 
       expect(str).to.include('. . . . p . . .   5');
