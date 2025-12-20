@@ -1,9 +1,6 @@
-export const chessPieces = [
-  'P', 'N', 'B', 'R', 'Q', 'K',
-  'p', 'n', 'b', 'r', 'q', 'k',
-] as const;
+export const chessPieces = ['P', 'N', 'B', 'R', 'Q', 'K', 'p', 'n', 'b', 'r', 'q', 'k'] as const;
 
-export type ChessPiece = typeof chessPieces[number];
+export type ChessPiece = (typeof chessPieces)[number];
 
 export type Rank = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
@@ -15,9 +12,9 @@ export type Pieces = (ChessPiece | null)[];
 
 export const algebraicToIndex = (square: Square): number => {
   const file = square.charCodeAt(0) - 'a'.charCodeAt(0);
-  const rank = 8 - parseInt(square[1], 10);
+  const rank = 8 - Number.parseInt(square[1], 10);
   return rank * 8 + file;
-}
+};
 
 export const parsePiece = (char: string): ChessPiece | null => {
   if (chessPieces.includes(char as ChessPiece)) {
@@ -31,12 +28,9 @@ export const parseSquare = (str: string): Square | null => {
     return null;
   }
   const file = str[0];
-  const rank = parseInt(str[1], 10);
+  const rank = Number.parseInt(str[1], 10);
 
-  if (
-    file < 'a' || file > 'h' ||
-    rank < 1 || rank > 8
-  ) {
+  if (file < 'a' || file > 'h' || rank < 1 || rank > 8) {
     return null;
   }
 
@@ -56,14 +50,70 @@ export class PiecesPlacement {
 
   public static initial(): PiecesPlacement {
     return new PiecesPlacement([
-      'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r',
-      'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p',
-      null, null, null, null, null, null, null, null,
-      null, null, null, null, null, null, null, null,
-      null, null, null, null, null, null, null, null,
-      null, null, null, null, null, null, null, null,
-      'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P',
-      'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R',
+      'r',
+      'n',
+      'b',
+      'q',
+      'k',
+      'b',
+      'n',
+      'r',
+      'p',
+      'p',
+      'p',
+      'p',
+      'p',
+      'p',
+      'p',
+      'p',
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      'P',
+      'P',
+      'P',
+      'P',
+      'P',
+      'P',
+      'P',
+      'P',
+      'R',
+      'N',
+      'B',
+      'Q',
+      'K',
+      'B',
+      'N',
+      'R',
     ]);
   }
 
@@ -85,7 +135,7 @@ export class PiecesPlacement {
     for (const rank of ranks) {
       for (const char of rank) {
         if (char >= '1' && char <= '8') {
-          const emptyCount = parseInt(char, 10);
+          const emptyCount = Number.parseInt(char, 10);
           squareIndex += emptyCount;
         } else {
           pieces[squareIndex] = char as ChessPiece;
@@ -118,8 +168,6 @@ export class PiecesPlacement {
   }
 
   public toFen(): string {
-    const parts: string[] = [];
-
     const ranks: string[] = [];
     for (let rank = 0; rank < 8; rank++) {
       let rankStr = '';

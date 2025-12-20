@@ -25,7 +25,10 @@
     "build": "tsdown",
     "dev": "tsdown --watch",
     "typecheck": "tsc --noEmit",
-    "test": "mocha"
+    "test": "mocha",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write ."
   },
   "keywords": [
     "typescript",
@@ -35,6 +38,7 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
     "@types/chai": "^4.3.11",
     "@types/mocha": "^10.0.6",
     "chai": "^5.0.0",

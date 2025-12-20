@@ -1,6 +1,4 @@
-import {
-  ChessPiece, parseSquare, PiecesPlacement, Square
-} from "./PiecesPlacement.js";
+import { type ChessPiece, PiecesPlacement, type Square, parseSquare } from './PiecesPlacement.js';
 
 export type PieceColor = 'w' | 'b';
 
@@ -50,7 +48,7 @@ export class ChessPosition {
     castlingRights: CastlingRights,
     enPassantSquare: Square | null,
     halfmoveClock: number,
-    fullmoveNumber: number
+    fullmoveNumber: number,
   ) {
     this.placement = placement;
     this.activeColor = activeColor;
@@ -67,9 +65,7 @@ export class ChessPosition {
       throw new Error('Invalid FEN: must have 6 parts');
     }
 
-    const [
-      piecePlacement, activeColor, castling, enPassant, halfmove, fullmove
-    ] = parts;
+    const [piecePlacement, activeColor, castling, enPassant, halfmove, fullmove] = parts;
 
     const placement = PiecesPlacement.fromFen(piecePlacement);
 
@@ -79,14 +75,14 @@ export class ChessPosition {
 
     const castlingRights: CastlingRights = parseCastlingRights(castling);
     const enPassantSquare: Square | null = parseEnPassantSquare(enPassant);
-    const halfmoveClock = parseInt(halfmove, 10);
+    const halfmoveClock = Number.parseInt(halfmove, 10);
 
-    if (isNaN(halfmoveClock) || halfmoveClock < 0) {
+    if (Number.isNaN(halfmoveClock) || halfmoveClock < 0) {
       throw new Error('Invalid FEN: halfmove clock must be a non-negative integer');
     }
 
-    const fullmoveNumber = parseInt(fullmove, 10);
-    if (isNaN(fullmoveNumber) || fullmoveNumber < 1) {
+    const fullmoveNumber = Number.parseInt(fullmove, 10);
+    if (Number.isNaN(fullmoveNumber) || fullmoveNumber < 1) {
       throw new Error('Invalid FEN: fullmove number must be a positive integer');
     }
 
@@ -96,7 +92,7 @@ export class ChessPosition {
       castlingRights,
       enPassantSquare,
       halfmoveClock,
-      fullmoveNumber
+      fullmoveNumber,
     );
   }
 
@@ -130,7 +126,7 @@ export class ChessPosition {
       this.castlingRights,
       this.enPassantSquare,
       this.halfmoveClock,
-      this.fullmoveNumber
+      this.fullmoveNumber,
     );
   }
 
@@ -148,7 +144,7 @@ export class ChessPosition {
       { ...this.castlingRights, ...updates.castlingRights },
       updates.enPassantSquare ?? this.enPassantSquare,
       updates.halfmoveClock ?? this.halfmoveClock,
-      updates.fullmoveNumber ?? this.fullmoveNumber
+      updates.fullmoveNumber ?? this.fullmoveNumber,
     );
   }
 

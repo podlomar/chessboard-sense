@@ -13,7 +13,6 @@ yarn-debug.log*
 yarn-error.log*
 
 # IDE
-.vscode/
 .idea/
 *.swp
 *.swo
