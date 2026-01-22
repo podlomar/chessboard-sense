@@ -3,7 +3,7 @@ import {
   type Piece,
   type PieceColor,
   PiecesPlacement,
-  Square,
+  type Square,
   type Target,
   type TargetChange,
   type TargetPiece,
@@ -14,32 +14,6 @@ export type CastlingRights = {
   whiteQueenside: boolean;
   blackKingside: boolean;
   blackQueenside: boolean;
-};
-
-const parseCastlingRights = (str: string): CastlingRights => {
-  const castlingRegex = /^[KQkq-]+$/;
-  if (!castlingRegex.test(str)) {
-    throw new Error('Invalid FEN: castling rights must be in format KQkq or "-"');
-  }
-
-  return {
-    whiteKingside: str.includes('K'),
-    whiteQueenside: str.includes('Q'),
-    blackKingside: str.includes('k'),
-    blackQueenside: str.includes('q'),
-  };
-};
-
-export const parseEnPassantSquare = (str: string): Square | null => {
-  if (str === '-') {
-    return null;
-  }
-
-  const square = Square.parseAlgebraic(str);
-  if (square === null || (square.rankIndex !== 2 && square.rankIndex !== 5)) {
-    throw new Error('Invalid FEN: en passant square must be in format [a-h][36] or "-"');
-  }
-  return square;
 };
 
 export interface LiftedPiece {
@@ -55,130 +29,66 @@ export interface Errors {
 
 export type Alteration = LiftedPiece | Errors;
 
+interface PendingSide {
+  readonly color: PieceColor;
+  readonly returnPlacement: PiecesPlacement;
+  readonly legalMoves: readonly Move[];
+}
+
+interface TurnSide {
+  readonly color: PieceColor;
+  readonly legalMoves: readonly Move[];
+}
+
 export class ChessPosition {
   public readonly placement: PiecesPlacement;
-  public readonly activeColor: PieceColor;
-  public readonly castlingRights: CastlingRights;
-  public readonly enPassantSquare: Square | null;
-  public readonly halfmoveClock: number;
-  public readonly fullmoveNumber: number;
+  public readonly pendingSide: PendingSide | null;
+  public readonly turnSide: TurnSide | null;
   public readonly alteration: Alteration | null;
-  public readonly legalMoves: readonly Move[] = [];
 
-  private constructor(
-    placement: PiecesPlacement,
-    activeColor: PieceColor,
-    castlingRights: CastlingRights,
-    enPassantSquare: Square | null,
-    halfmoveClock: number,
-    fullmoveNumber: number,
+  private chess: Chess;
+
+  public constructor(
+    chess: Chess,
     alteration: Alteration | null,
+    turnSide: TurnSide | null,
+    pendingSide: PendingSide | null,
   ) {
-    this.placement = placement;
-    this.activeColor = activeColor;
-    this.castlingRights = castlingRights;
-    this.enPassantSquare = enPassantSquare;
-    this.halfmoveClock = halfmoveClock;
-    this.fullmoveNumber = fullmoveNumber;
+    this.placement = PiecesPlacement.fromFen(chess.fen().split(' ')[0]);
     this.alteration = alteration;
-
-    const chess = new Chess(this.toFEN());
-    this.legalMoves = chess.moves({ verbose: true });
-  }
-
-  public static fromFEN(fen: string): ChessPosition {
-    const parts = fen.trim().split(/\s+/);
-
-    if (parts.length !== 6) {
-      throw new Error('Invalid FEN: must have 6 parts');
-    }
-
-    const [piecePlacement, activeColor, castling, enPassant, halfmove, fullmove] = parts;
-
-    const placement = PiecesPlacement.fromFen(piecePlacement);
-
-    if (activeColor !== 'w' && activeColor !== 'b') {
-      throw new Error('Invalid FEN: active color must be "w" or "b"');
-    }
-
-    const castlingRights: CastlingRights = parseCastlingRights(castling);
-    const enPassantSquare: Square | null = parseEnPassantSquare(enPassant);
-    const halfmoveClock = Number.parseInt(halfmove, 10);
-
-    if (Number.isNaN(halfmoveClock) || halfmoveClock < 0) {
-      throw new Error('Invalid FEN: halfmove clock must be a non-negative integer');
-    }
-
-    const fullmoveNumber = Number.parseInt(fullmove, 10);
-    if (Number.isNaN(fullmoveNumber) || fullmoveNumber < 1) {
-      throw new Error('Invalid FEN: fullmove number must be a positive integer');
-    }
-
-    return new ChessPosition(
-      placement,
-      activeColor as PieceColor,
-      castlingRights,
-      enPassantSquare,
-      halfmoveClock,
-      fullmoveNumber,
-      null,
-    );
+    this.turnSide = turnSide;
+    this.pendingSide = pendingSide;
+    this.chess = chess;
   }
 
   public static initial(): ChessPosition {
-    return ChessPosition.fromFEN('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+    const chess = new Chess();
+    const legalMoves = chess.moves({ verbose: true });
+    return new ChessPosition(chess, null, { color: 'w', legalMoves }, null);
   }
 
   public toFEN(): string {
-    const parts: string[] = [];
-    parts.push(this.placement.toFen());
-    parts.push(this.activeColor);
-
-    let castling = '';
-    if (this.castlingRights.whiteKingside) castling += 'K';
-    if (this.castlingRights.whiteQueenside) castling += 'Q';
-    if (this.castlingRights.blackKingside) castling += 'k';
-    if (this.castlingRights.blackQueenside) castling += 'q';
-    parts.push(castling || '-');
-
-    parts.push(this.enPassantSquare ? this.enPassantSquare.algebraic() : '-');
-    parts.push(this.halfmoveClock.toString());
-    parts.push(this.fullmoveNumber.toString());
-
-    return parts.join(' ');
+    return this.chess.fen();
   }
 
-  public updateAt(square: Square, piece: Piece | null): ChessPosition {
-    return new ChessPosition(
-      this.placement.put(square, piece),
-      this.activeColor,
-      this.castlingRights,
-      this.enPassantSquare,
-      this.halfmoveClock,
-      this.fullmoveNumber,
-      // TODO: update alteration accordingly
-      this.alteration,
-    );
-  }
+  // public updateAt(square: Square, piece: Piece | null): ChessPosition {
+  //   return new ChessPosition(
+  //     this.placement.put(square, piece),
+  //     this.activeColor,
+  //     this.castlingRights,
+  //     this.enPassantSquare,
+  //     this.halfmoveClock,
+  //     this.fullmoveNumber,
+  //     // TODO: update alteration accordingly
+  //     this.alteration,
+  //     this.turnSide,
+  //     this.pendingSide,
+  //     this.chess,
+  //   );
+  // }
 
-  public update(updates: {
-    placement?: PiecesPlacement;
-    activeColor?: PieceColor;
-    castlingRights?: Partial<CastlingRights>;
-    enPassantSquare?: Square | null;
-    halfmoveClock?: number;
-    fullmoveNumber?: number;
-    alteration?: Alteration | null;
-  }): ChessPosition {
-    return new ChessPosition(
-      updates.placement ?? this.placement,
-      updates.activeColor ?? this.activeColor,
-      { ...this.castlingRights, ...updates.castlingRights },
-      updates.enPassantSquare === undefined ? this.enPassantSquare : updates.enPassantSquare,
-      updates.halfmoveClock ?? this.halfmoveClock,
-      updates.fullmoveNumber ?? this.fullmoveNumber,
-      updates.alteration === undefined ? this.alteration : updates.alteration,
-    );
+  public withAlteration(alteration: Alteration | null): ChessPosition {
+    return new ChessPosition(this.chess, alteration, this.turnSide, this.pendingSide);
   }
 
   private liftedPiece(change: TargetChange): Piece | null {
@@ -191,7 +101,7 @@ export class ChessPosition {
     }
 
     const fromColor = change.from.color();
-    return fromColor === this.activeColor ? change.from : null;
+    return fromColor === this.chess.turn() ? change.from : null;
   }
 
   public next(placement: PiecesPlacement): ChessPosition {
@@ -200,7 +110,7 @@ export class ChessPosition {
     if (this.alteration !== null) {
       if (diff.length === 0) {
         console.log('CHESS POSITION: clearing alteration');
-        return this.update({ alteration: null });
+        return this.withAlteration(null);
       }
     }
 
@@ -214,34 +124,70 @@ export class ChessPosition {
       const liftedPiece = this.liftedPiece(change);
       if (liftedPiece === null) {
         console.log('CHESS POSITION: registering error for single change');
-        return this.update({
-          alteration: {
-            type: 'errors',
-            targets: [
-              {
-                piece: change.from,
-                square: change.square,
-              },
-            ],
-          },
+        return this.withAlteration({
+          type: 'errors',
+          targets: [
+            {
+              piece: change.from,
+              square: change.square,
+            },
+          ],
         });
       }
 
       console.log('CHESS POSITION: registering lifted piece');
-      return this.update({
-        alteration: {
-          type: 'lifted',
-          piece: liftedPiece,
-          square: change.square,
-        },
+      return this.withAlteration({
+        type: 'lifted',
+        piece: liftedPiece,
+        square: change.square,
       });
     }
 
-    for (const move of this.legalMoves) {
+    if (this.pendingSide !== null && placement.equals(this.pendingSide.returnPlacement)) {
+      console.log('CHESS POSITION: pending side return detected, no alteration');
+      this.chess.undo();
+      return new ChessPosition(
+        this.chess,
+        null,
+        {
+          color: this.pendingSide.color,
+          legalMoves: this.chess.moves({ verbose: true }),
+        },
+        null,
+      );
+    }
+
+    if (this.turnSide === null) {
+      console.log('CHESS POSITION: no turn side available, registering errors');
+      const errors: Target[] = diff.map((change) => ({
+        piece: change.from,
+        square: change.square,
+      }));
+
+      return this.withAlteration({
+        type: 'errors',
+        targets: errors,
+      });
+    }
+
+    for (const move of this.turnSide?.legalMoves ?? []) {
       const movePlacement = move.after.split(' ')[0];
       if (movePlacement === placement.toFen()) {
         console.log('CHESS POSITION: legal move detected, no alteration');
-        return ChessPosition.fromFEN(move.after);
+        this.chess.move(move);
+        return new ChessPosition(
+          this.chess,
+          null,
+          {
+            color: this.chess.turn(),
+            legalMoves: this.chess.moves({ verbose: true }),
+          },
+          {
+            color: this.turnSide.color,
+            returnPlacement: this.placement,
+            legalMoves: this.turnSide.legalMoves,
+          },
+        );
       }
     }
 
@@ -251,11 +197,9 @@ export class ChessPosition {
     }));
 
     console.log('CHESS POSITION: registering errors');
-    return this.update({
-      alteration: {
-        type: 'errors',
-        targets: errors,
-      },
+    return this.withAlteration({
+      type: 'errors',
+      targets: errors,
     });
   }
 }

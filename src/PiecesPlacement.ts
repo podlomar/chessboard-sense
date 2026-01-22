@@ -274,4 +274,15 @@ export class PiecesPlacement {
     }
     return diff;
   }
+
+  public equals(other: PiecesPlacement): boolean {
+    for (let i = 0; i < 64; i++) {
+      const pieceA = this.pieces[i];
+      const pieceB = other.pieces[i];
+      if (pieceA?.symbol !== pieceB?.symbol) {
+        return false;
+      }
+    }
+    return true;
+  }
 }
