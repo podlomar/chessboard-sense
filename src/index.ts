@@ -1,3 +1,10 @@
-export { ChessPosition } from './ChessPosition.js';
-export { PiecesPlacement } from './PiecesPlacement.js';
-export { ChessGame } from './ChessGame.js';
+export { ChessPosition, type Alteration } from './ChessPosition.js';
+export {
+  PiecesPlacement,
+  Piece,
+  Square,
+  type Target,
+  type TargetPiece,
+} from './PiecesPlacement.js';
+export { ChessGame, type ChessGameState } from './ChessGame.js';
+export { AsciiBoard } from './AsciiBoard.js';

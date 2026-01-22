@@ -286,9 +286,7 @@ describe('PiecesPlacement', () => {
         'Must provide exactly 8 pieces for the rank',
       );
 
-      expect(() => empty.putRank(1, [])).to.throw(
-        'Must provide exactly 8 pieces for the rank',
-      );
+      expect(() => empty.putRank(1, [])).to.throw('Must provide exactly 8 pieces for the rank');
     });
 
     it('should allow building a position rank by rank', () => {
@@ -440,7 +438,7 @@ describe('PiecesPlacement', () => {
   describe('toString()', () => {
     it('should display the board as ASCII art', () => {
       const placement = PiecesPlacement.initial();
-      const str = placement.toString();
+      const str = placement.toAscii();
 
       expect(str).to.include('r n b q k b n r   8');
       expect(str).to.include('p p p p p p p p   7');
@@ -451,7 +449,7 @@ describe('PiecesPlacement', () => {
 
     it('should display empty squares as dots', () => {
       const placement = PiecesPlacement.empty();
-      const str = placement.toString();
+      const str = placement.toAscii();
 
       expect(str).to.include('. . . . . . . .   8');
       expect(str).to.include('. . . . . . . .   1');
@@ -460,7 +458,7 @@ describe('PiecesPlacement', () => {
 
     it('should display mixed pieces and empty squares', () => {
       const placement = PiecesPlacement.empty().put('e4', 'P').put('e5', 'p');
-      const str = placement.toString();
+      const str = placement.toAscii();
 
       expect(str).to.include('. . . . p . . .   5');
       expect(str).to.include('. . . . P . . .   4');

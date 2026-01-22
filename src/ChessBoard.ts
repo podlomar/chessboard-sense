@@ -1,21 +1,7 @@
-import type { ChessPosition } from './ChessPosition';
+import type { ChessPosition } from './ChessPosition.js';
 import { PiecesPlacement } from './PiecesPlacement.js';
 
-export interface SettingUpState {
-  readonly type: 'setting-up';
-  readonly placement: PiecesPlacement;
-}
-
-export interface InProgressState {
-  readonly type: 'in-progress';
-  readonly position: ChessPosition;
-}
-
-export type ChessGameState = SettingUpState | InProgressState;
-
-type StateChangeCallback = (newState: ChessGameState) => void;
-
-export class ChessGame {
+export class ChessBoard {
   private gameState: ChessGameState;
   private onChangeCallback: StateChangeCallback | null = null;
 
