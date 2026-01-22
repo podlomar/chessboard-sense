@@ -63,6 +63,7 @@ export class ChessPosition {
   public readonly halfmoveClock: number;
   public readonly fullmoveNumber: number;
   public readonly alteration: Alteration | null;
+  public readonly legalMoves: readonly Move[] = [];
 
   private constructor(
     placement: PiecesPlacement,
@@ -80,6 +81,9 @@ export class ChessPosition {
     this.halfmoveClock = halfmoveClock;
     this.fullmoveNumber = fullmoveNumber;
     this.alteration = alteration;
+
+    const chess = new Chess(this.toFEN());
+    this.legalMoves = chess.moves({ verbose: true });
   }
 
   public static fromFEN(fen: string): ChessPosition {
@@ -233,6 +237,14 @@ export class ChessPosition {
       });
     }
 
+    for (const move of this.legalMoves) {
+      const movePlacement = move.after.split(' ')[0];
+      if (movePlacement === placement.toFen()) {
+        console.log('CHESS POSITION: legal move detected, no alteration');
+        return ChessPosition.fromFEN(move.after);
+      }
+    }
+
     const errors: Target[] = diff.map((change) => ({
       piece: change.from,
       square: change.square,
@@ -246,51 +258,4 @@ export class ChessPosition {
       },
     });
   }
-
-  /* console.log('Current position FEN:', this.toFEN());
-    console.log('New placement FEN:', placement.toFen());
-    console.log('Diff:', diff);
-
-    if (diff.length === 0) {
-      return this;
-    }
-
-    const chess = new Chess(this.toFEN());
-    if (chess.isGameOver()) {
-      return this.update({
-        errors: diff.map((change) => ({
-          square: change.square,
-          piece: change.to,
-        })),
-      });
-    }
-
-    if (diff.length === 1) {
-      const change = diff[0];
-      if (change.from !== null && change.to === null) {
-        const fromColor = change.from.color();
-        if (fromColor === this.activeColor) {
-          return this.update({
-            lifted: { piece: change.from, square: change.square },
-          });
-        }
-
-        return this.update({
-          errors: [
-            {
-              square: change.square,
-              piece: change.from,
-            },
-          ],
-        });
-      }
-    }
-
-    const moves: Move[] = chess.moves({ verbose: true });
-    for (const move of moves) {
-      const nextPlacement = PiecesPlacement.fromFen(move.after);
-      if (nextPlacement.diff(placement).length === 0) {
-        return ChessPosition.fromFEN(move.after);
-      }
-    } */
 }
