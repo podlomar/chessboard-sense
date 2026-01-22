@@ -143,18 +143,38 @@ export class ChessPosition {
       });
     }
 
-    if (this.pendingSide !== null && placement.equals(this.pendingSide.returnPlacement)) {
-      console.log('CHESS POSITION: pending side return detected, no alteration');
-      this.chess.undo();
-      return new ChessPosition(
-        this.chess,
-        null,
-        {
-          color: this.pendingSide.color,
-          legalMoves: this.chess.moves({ verbose: true }),
-        },
-        null,
-      );
+    if (this.pendingSide !== null) {
+      if (placement.equals(this.pendingSide.returnPlacement)) {
+        console.log('CHESS POSITION: pending side return detected, no alteration');
+        this.chess.undo();
+        return new ChessPosition(
+          this.chess,
+          null,
+          {
+            color: this.pendingSide.color,
+            legalMoves: this.chess.moves({ verbose: true }),
+          },
+          null,
+        );
+      }
+
+      for (const move of this.pendingSide.legalMoves) {
+        const movePlacement = move.after.split(' ')[0];
+        if (movePlacement === placement.toFen()) {
+          console.log('CHESS POSITION: pending side legal move detected, no alteration');
+          this.chess.undo();
+          this.chess.move(move);
+          return new ChessPosition(
+            this.chess,
+            null,
+            {
+              color: this.chess.turn(),
+              legalMoves: this.chess.moves({ verbose: true }),
+            },
+            this.pendingSide,
+          );
+        }
+      }
     }
 
     if (this.turnSide === null) {
