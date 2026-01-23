@@ -48,6 +48,11 @@ interface TurnSide {
 
 const STARTING_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
+export interface Turn {
+  white: string;
+  black: string | null;
+}
+
 export class ChessPosition {
   public readonly placement: PiecesPlacement;
   public readonly turnSide: TurnSide;
@@ -109,6 +114,20 @@ export class ChessPosition {
 
     const fromColor = change.from.color();
     return fromColor === this.chess.turn() ? change.from : null;
+  }
+
+  public movesHistory(): Turn[] {
+    const turns: Turn[] = [];
+    const history = this.chess.history({ verbose: true });
+
+    for (let i = 0; i < history.length; i += 2) {
+      turns.push({
+        white: history[i].san,
+        black: history[i + 1] ? history[i + 1].san : null,
+      });
+    }
+
+    return turns;
   }
 
   public next(placement: PiecesPlacement): ChessPosition {

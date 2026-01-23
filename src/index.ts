@@ -1,4 +1,4 @@
-export { ChessPosition, type Alteration, type GameEnding } from './ChessPosition.js';
+export { ChessPosition, type Alteration, type GameEnding, type Turn } from './ChessPosition.js';
 export {
   PiecesPlacement,
   Piece,
