@@ -82,6 +82,10 @@ export class ChessPosition {
     return this.chess.fen();
   }
 
+  public pgn(): string {
+    return this.chess.pgn();
+  }
+
   public isStarting(): boolean {
     return this.toFEN() === STARTING_FEN && this.alteration === null;
   }
