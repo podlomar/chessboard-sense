@@ -2,7 +2,7 @@ export const pieceSymbols = ['P', 'N', 'B', 'R', 'Q', 'K', 'p', 'n', 'b', 'r', '
 
 export type PieceSymbol = (typeof pieceSymbols)[number];
 
-export type PieceColor = 'w' | 'b';
+export type SideColor = 'w' | 'b';
 
 export class Piece {
   public readonly symbol: PieceSymbol;
@@ -31,7 +31,7 @@ export class Piece {
     return new Piece(symbol as PieceSymbol);
   }
 
-  public color(): PieceColor {
+  public color(): SideColor {
     return this.symbol === this.symbol.toUpperCase() ? 'w' : 'b';
   }
 
@@ -176,8 +176,6 @@ export class PiecesPlacement {
   }
 
   public isInitial(): boolean {
-    console.log('Initial FEN:', INITIAL_FEN);
-    console.log('Current FEN:', this.toFen());
     return this.toFen() === INITIAL_FEN;
   }
 
@@ -260,16 +258,11 @@ export class PiecesPlacement {
 
   public diff(other: PiecesPlacement): TargetChange[] {
     const diff: TargetChange[] = [];
-    for (let rank = 0; rank < 8; rank++) {
-      for (let file = 0; file < 8; file++) {
-        const square = new Square(rank, file);
-        const index = square.index();
-        const from = this.pieces[index];
-        const to = other.pieces[index];
-
-        if (from?.symbol !== to?.symbol) {
-          diff.push({ square, from, to });
-        }
+    for (let i = 0; i < 64; i++) {
+      const from = this.pieces[i];
+      const to = other.pieces[i];
+      if (from?.symbol !== to?.symbol) {
+        diff.push({ square: Square.fromIndex(i), from, to });
       }
     }
     return diff;

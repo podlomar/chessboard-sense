@@ -1,12 +1,11 @@
 import { Chess, type Move } from 'chess.js';
 import {
   type Piece,
-  type PieceColor,
   PiecesPlacement,
+  type SideColor,
   type Square,
   type Target,
   type TargetChange,
-  type TargetPiece,
 } from './PiecesPlacement.js';
 
 export type CastlingRights = {
@@ -29,35 +28,47 @@ export interface Errors {
 
 export type Alteration = LiftedPiece | Errors;
 
+export type GameEnding =
+  | 'checkmate'
+  | 'stalemate'
+  | 'insufficient_material'
+  | 'threefold_repetition'
+  | '50move_rule';
+
 interface PendingSide {
-  readonly color: PieceColor;
+  readonly color: SideColor;
   readonly returnPlacement: PiecesPlacement;
   readonly legalMoves: readonly Move[];
 }
 
 interface TurnSide {
-  readonly color: PieceColor;
+  readonly color: SideColor;
   readonly legalMoves: readonly Move[];
 }
 
+const STARTING_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+
 export class ChessPosition {
   public readonly placement: PiecesPlacement;
+  public readonly turnSide: TurnSide;
   public readonly pendingSide: PendingSide | null;
-  public readonly turnSide: TurnSide | null;
   public readonly alteration: Alteration | null;
+  public readonly returned: boolean;
 
   private chess: Chess;
 
   public constructor(
     chess: Chess,
     alteration: Alteration | null,
-    turnSide: TurnSide | null,
+    turnSide: TurnSide,
     pendingSide: PendingSide | null,
+    returned = false,
   ) {
     this.placement = PiecesPlacement.fromFen(chess.fen().split(' ')[0]);
     this.alteration = alteration;
     this.turnSide = turnSide;
     this.pendingSide = pendingSide;
+    this.returned = returned;
     this.chess = chess;
   }
 
@@ -71,21 +82,13 @@ export class ChessPosition {
     return this.chess.fen();
   }
 
-  // public updateAt(square: Square, piece: Piece | null): ChessPosition {
-  //   return new ChessPosition(
-  //     this.placement.put(square, piece),
-  //     this.activeColor,
-  //     this.castlingRights,
-  //     this.enPassantSquare,
-  //     this.halfmoveClock,
-  //     this.fullmoveNumber,
-  //     // TODO: update alteration accordingly
-  //     this.alteration,
-  //     this.turnSide,
-  //     this.pendingSide,
-  //     this.chess,
-  //   );
-  // }
+  public isStarting(): boolean {
+    return this.toFEN() === STARTING_FEN && this.alteration === null;
+  }
+
+  public turnColor(): SideColor {
+    return this.chess.turn();
+  }
 
   public withAlteration(alteration: Alteration | null): ChessPosition {
     return new ChessPosition(this.chess, alteration, this.turnSide, this.pendingSide);
@@ -155,6 +158,7 @@ export class ChessPosition {
             legalMoves: this.chess.moves({ verbose: true }),
           },
           null,
+          true,
         );
       }
 
@@ -221,5 +225,29 @@ export class ChessPosition {
       type: 'errors',
       targets: errors,
     });
+  }
+
+  public gameEnding(): GameEnding | null {
+    if (this.chess.isCheckmate()) {
+      return 'checkmate';
+    }
+
+    if (this.chess.isStalemate()) {
+      return 'stalemate';
+    }
+
+    if (this.chess.isInsufficientMaterial()) {
+      return 'insufficient_material';
+    }
+
+    if (this.chess.isThreefoldRepetition()) {
+      return 'threefold_repetition';
+    }
+
+    if (this.chess.isDrawByFiftyMoves()) {
+      return '50move_rule';
+    }
+
+    return null;
   }
 }
