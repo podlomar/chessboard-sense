@@ -1,10 +1,17 @@
-export { ChessPosition, type Alteration, type GameEnding, type Turn } from './ChessPosition.js';
+export {
+  ChessPosition,
+  type PositionStatus,
+  type GameEnding,
+  type Turn,
+} from './ChessPosition.js';
 export {
   PiecesPlacement,
-  Piece,
   Square,
   type Target,
   type TargetPiece,
-  type SideColor,
 } from './PiecesPlacement.js';
+export {
+  Piece,
+  type Side,
+} from './piece.js';
 export { AsciiBoard } from './AsciiBoard.js';

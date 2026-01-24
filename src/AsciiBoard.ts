@@ -1,5 +1,6 @@
 import type { ChessPosition } from './ChessPosition.js';
-import type { Piece, PiecesPlacement, Square } from './PiecesPlacement.js';
+import type { PiecesPlacement, Square } from './PiecesPlacement.js';
+import type { Piece } from './piece.js';
 
 const circumflex = (piece: Piece): string => {
   switch (piece.symbol) {
@@ -79,7 +80,7 @@ export class AsciiBoard {
   public static fromPlacement(placement: PiecesPlacement): AsciiBoard {
     const boardArray: string[] = Array(64).fill('.');
     for (let i = 0; i < 64; i++) {
-      const piece = placement.atIndex(i);
+      const piece = placement.pieceAtIndex(i);
       if (piece !== null) {
         boardArray[i] = piece.symbol;
       }
@@ -90,11 +91,11 @@ export class AsciiBoard {
 
   public static fromPosition(position: ChessPosition): AsciiBoard {
     const board = AsciiBoard.fromPlacement(position.placement);
-    if (position.alteration?.type === 'lifted') {
-      const piece = position.alteration.piece;
-      board.setPiece(position.alteration.square, piece, 'circumflex');
-    } else if (position.alteration?.type === 'errors') {
-      for (const error of position.alteration.targets) {
+    if (position.status?.type === 'lifted') {
+      const piece = position.status.piece;
+      board.setPiece(position.status.square, piece, 'circumflex');
+    } else if (position.status?.type === 'errors') {
+      for (const error of position.status.targets) {
         if (error.piece === null) {
           board.clearSquare(error.square, 'diaeresis');
         } else {

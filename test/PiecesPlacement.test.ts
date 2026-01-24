@@ -16,16 +16,16 @@ describe('PiecesPlacement', () => {
       expect(placement.pieces).to.have.lengthOf(64);
 
       for (let i = 0; i < 64; i++) {
-        expect(placement.atIndex(i)).to.be.null;
+        expect(placement.pieceAtIndex(i)).to.be.null;
       }
     });
 
     it('should return null for any square on empty board', () => {
       const placement = PiecesPlacement.empty();
 
-      expect(placement.at('a1')).to.be.null;
-      expect(placement.at('e4')).to.be.null;
-      expect(placement.at('h8')).to.be.null;
+      expect(placement.pieceAt('a1')).to.be.null;
+      expect(placement.pieceAt('e4')).to.be.null;
+      expect(placement.pieceAt('h8')).to.be.null;
     });
   });
 
@@ -34,41 +34,41 @@ describe('PiecesPlacement', () => {
       const placement = PiecesPlacement.initial();
 
       // Check white pieces (rank 1)
-      expect(placement.at('a1')).to.equal('R');
-      expect(placement.at('b1')).to.equal('N');
-      expect(placement.at('c1')).to.equal('B');
-      expect(placement.at('d1')).to.equal('Q');
-      expect(placement.at('e1')).to.equal('K');
-      expect(placement.at('f1')).to.equal('B');
-      expect(placement.at('g1')).to.equal('N');
-      expect(placement.at('h1')).to.equal('R');
+      expect(placement.pieceAt('a1')).to.equal('R');
+      expect(placement.pieceAt('b1')).to.equal('N');
+      expect(placement.pieceAt('c1')).to.equal('B');
+      expect(placement.pieceAt('d1')).to.equal('Q');
+      expect(placement.pieceAt('e1')).to.equal('K');
+      expect(placement.pieceAt('f1')).to.equal('B');
+      expect(placement.pieceAt('g1')).to.equal('N');
+      expect(placement.pieceAt('h1')).to.equal('R');
 
       // Check white pawns (rank 2)
       for (const file of ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']) {
-        expect(placement.at(`${file}2` as Square)).to.equal('P');
+        expect(placement.pieceAt(`${file}2` as Square)).to.equal('P');
       }
 
       // Check empty squares (ranks 3-6)
       for (const rank of [3, 4, 5, 6]) {
         for (const file of ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']) {
-          expect(placement.at(`${file}${rank}` as Square)).to.be.null;
+          expect(placement.pieceAt(`${file}${rank}` as Square)).to.be.null;
         }
       }
 
       // Check black pawns (rank 7)
       for (const file of ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']) {
-        expect(placement.at(`${file}7` as Square)).to.equal('p');
+        expect(placement.pieceAt(`${file}7` as Square)).to.equal('p');
       }
 
       // Check black pieces (rank 8)
-      expect(placement.at('a8')).to.equal('r');
-      expect(placement.at('b8')).to.equal('n');
-      expect(placement.at('c8')).to.equal('b');
-      expect(placement.at('d8')).to.equal('q');
-      expect(placement.at('e8')).to.equal('k');
-      expect(placement.at('f8')).to.equal('b');
-      expect(placement.at('g8')).to.equal('n');
-      expect(placement.at('h8')).to.equal('r');
+      expect(placement.pieceAt('a8')).to.equal('r');
+      expect(placement.pieceAt('b8')).to.equal('n');
+      expect(placement.pieceAt('c8')).to.equal('b');
+      expect(placement.pieceAt('d8')).to.equal('q');
+      expect(placement.pieceAt('e8')).to.equal('k');
+      expect(placement.pieceAt('f8')).to.equal('b');
+      expect(placement.pieceAt('g8')).to.equal('n');
+      expect(placement.pieceAt('h8')).to.equal('r');
     });
   });
 
@@ -77,36 +77,36 @@ describe('PiecesPlacement', () => {
       const fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR';
       const placement = PiecesPlacement.fromFen(fen);
 
-      expect(placement.at('e1')).to.equal('K');
-      expect(placement.at('e8')).to.equal('k');
-      expect(placement.at('a2')).to.equal('P');
-      expect(placement.at('a7')).to.equal('p');
-      expect(placement.at('e4')).to.be.null;
+      expect(placement.pieceAt('e1')).to.equal('K');
+      expect(placement.pieceAt('e8')).to.equal('k');
+      expect(placement.pieceAt('a2')).to.equal('P');
+      expect(placement.pieceAt('a7')).to.equal('p');
+      expect(placement.pieceAt('e4')).to.be.null;
     });
 
     it('should parse FEN with full notation (ignoring extra parts)', () => {
       const fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
       const placement = PiecesPlacement.fromFen(fen);
 
-      expect(placement.at('e1')).to.equal('K');
+      expect(placement.pieceAt('e1')).to.equal('K');
     });
 
     it('should parse a position after e4', () => {
       const fen = 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR';
       const placement = PiecesPlacement.fromFen(fen);
 
-      expect(placement.at('e4')).to.equal('P');
-      expect(placement.at('e2')).to.be.null;
+      expect(placement.pieceAt('e4')).to.equal('P');
+      expect(placement.pieceAt('e2')).to.be.null;
     });
 
     it('should parse a position with multiple pieces on same rank', () => {
       const fen = 'r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R';
       const placement = PiecesPlacement.fromFen(fen);
 
-      expect(placement.at('b5')).to.equal('B');
-      expect(placement.at('c6')).to.equal('n');
-      expect(placement.at('f6')).to.equal('n');
-      expect(placement.at('e5')).to.equal('p');
+      expect(placement.pieceAt('b5')).to.equal('B');
+      expect(placement.pieceAt('c6')).to.equal('n');
+      expect(placement.pieceAt('f6')).to.equal('n');
+      expect(placement.pieceAt('e5')).to.equal('p');
     });
 
     it('should parse an empty board', () => {
@@ -114,7 +114,7 @@ describe('PiecesPlacement', () => {
       const placement = PiecesPlacement.fromFen(fen);
 
       for (let i = 0; i < 64; i++) {
-        expect(placement.atIndex(i)).to.be.null;
+        expect(placement.pieceAtIndex(i)).to.be.null;
       }
     });
 
@@ -141,72 +141,72 @@ describe('PiecesPlacement', () => {
     it('should get piece at algebraic notation', () => {
       const placement = PiecesPlacement.initial();
 
-      expect(placement.at('e1')).to.equal('K');
-      expect(placement.at('e8')).to.equal('k');
-      expect(placement.at('a1')).to.equal('R');
-      expect(placement.at('h8')).to.equal('r');
+      expect(placement.pieceAt('e1')).to.equal('K');
+      expect(placement.pieceAt('e8')).to.equal('k');
+      expect(placement.pieceAt('a1')).to.equal('R');
+      expect(placement.pieceAt('h8')).to.equal('r');
     });
 
     it('should get piece at index', () => {
       const placement = PiecesPlacement.initial();
 
       // Index 0 is a8
-      expect(placement.atIndex(0)).to.equal('r');
+      expect(placement.pieceAtIndex(0)).to.equal('r');
       // Index 7 is h8
-      expect(placement.atIndex(7)).to.equal('r');
+      expect(placement.pieceAtIndex(7)).to.equal('r');
       // Index 56 is a1
-      expect(placement.atIndex(56)).to.equal('R');
+      expect(placement.pieceAtIndex(56)).to.equal('R');
       // Index 63 is h1
-      expect(placement.atIndex(63)).to.equal('R');
+      expect(placement.pieceAtIndex(63)).to.equal('R');
     });
 
     it('should return null for empty squares', () => {
       const placement = PiecesPlacement.initial();
 
-      expect(placement.at('e4')).to.be.null;
-      expect(placement.at('d5')).to.be.null;
-      expect(placement.atIndex(27)).to.be.null; // d5
+      expect(placement.pieceAt('e4')).to.be.null;
+      expect(placement.pieceAt('d5')).to.be.null;
+      expect(placement.pieceAtIndex(27)).to.be.null; // d5
     });
   });
 
   describe('put()', () => {
     it('should create new placement with piece added', () => {
       const empty = PiecesPlacement.empty();
-      const withKing = empty.put('e4', 'K');
+      const withKing = empty.withPieceAt('e4', 'K');
 
-      expect(withKing.at('e4')).to.equal('K');
-      expect(empty.at('e4')).to.be.null; // Original unchanged
+      expect(withKing.pieceAt('e4')).to.equal('K');
+      expect(empty.pieceAt('e4')).to.be.null; // Original unchanged
     });
 
     it('should create new placement with piece replaced', () => {
       const initial = PiecesPlacement.initial();
-      const modified = initial.put('e2', 'Q');
+      const modified = initial.withPieceAt('e2', 'Q');
 
-      expect(modified.at('e2')).to.equal('Q');
-      expect(initial.at('e2')).to.equal('P'); // Original unchanged
+      expect(modified.pieceAt('e2')).to.equal('Q');
+      expect(initial.pieceAt('e2')).to.equal('P'); // Original unchanged
     });
 
     it('should create new placement with piece removed', () => {
       const initial = PiecesPlacement.initial();
-      const modified = initial.put('e2', null);
+      const modified = initial.withPieceAt('e2', null);
 
-      expect(modified.at('e2')).to.be.null;
-      expect(initial.at('e2')).to.equal('P'); // Original unchanged
+      expect(modified.pieceAt('e2')).to.be.null;
+      expect(initial.pieceAt('e2')).to.equal('P'); // Original unchanged
     });
 
     it('should preserve immutability', () => {
       const placement1 = PiecesPlacement.empty();
-      const placement2 = placement1.put('e4', 'K');
-      const placement3 = placement2.put('d4', 'Q');
+      const placement2 = placement1.withPieceAt('e4', 'K');
+      const placement3 = placement2.withPieceAt('d4', 'Q');
 
-      expect(placement1.at('e4')).to.be.null;
-      expect(placement1.at('d4')).to.be.null;
+      expect(placement1.pieceAt('e4')).to.be.null;
+      expect(placement1.pieceAt('d4')).to.be.null;
 
-      expect(placement2.at('e4')).to.equal('K');
-      expect(placement2.at('d4')).to.be.null;
+      expect(placement2.pieceAt('e4')).to.equal('K');
+      expect(placement2.pieceAt('d4')).to.be.null;
 
-      expect(placement3.at('e4')).to.equal('K');
-      expect(placement3.at('d4')).to.equal('Q');
+      expect(placement3.pieceAt('e4')).to.equal('K');
+      expect(placement3.pieceAt('d4')).to.equal('Q');
     });
   });
 
@@ -271,7 +271,7 @@ describe('PiecesPlacement', () => {
       const placement1 = PiecesPlacement.empty();
       const placement2 = placement1.putRank(1, ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']);
 
-      expect(placement1.at('e1')).to.be.null;
+      expect(placement1.pieceAt('e1')).to.be.null;
       expect(placement2.at('e1')).to.equal('K');
     });
 
@@ -316,14 +316,14 @@ describe('PiecesPlacement', () => {
     });
 
     it('should convert position after e4 to FEN', () => {
-      const placement = PiecesPlacement.initial().put('e2', null).put('e4', 'P');
+      const placement = PiecesPlacement.initial().withPieceAt('e2', null).withPieceAt('e4', 'P');
       const fen = placement.toFen();
 
       expect(fen).to.equal('rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR');
     });
 
     it('should handle consecutive empty squares', () => {
-      const placement = PiecesPlacement.empty().put('a1', 'K').put('h1', 'R');
+      const placement = PiecesPlacement.empty().withPieceAt('a1', 'K').withPieceAt('h1', 'R');
       const fen = placement.toFen();
 
       expect(fen).to.equal('8/8/8/8/8/8/8/K6R');
@@ -457,7 +457,7 @@ describe('PiecesPlacement', () => {
     });
 
     it('should display mixed pieces and empty squares', () => {
-      const placement = PiecesPlacement.empty().put('e4', 'P').put('e5', 'p');
+      const placement = PiecesPlacement.empty().withPieceAt('e4', 'P').withPieceAt('e5', 'p');
       const str = placement.toAscii();
 
       expect(str).to.include('. . . . p . . .   5');

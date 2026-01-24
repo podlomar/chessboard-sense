@@ -1,32 +1,27 @@
 import { Chess, type Move } from 'chess.js';
-import {
-  type Piece,
-  PiecesPlacement,
-  type SideColor,
-  type Square,
-  type Target,
-  type TargetChange,
-} from './PiecesPlacement.js';
+import { PiecesPlacement, type Square, type Target, type TargetChange } from './PiecesPlacement.js';
+import type { Piece, Side } from './piece.js';
 
-export type CastlingRights = {
-  whiteKingside: boolean;
-  whiteQueenside: boolean;
-  blackKingside: boolean;
-  blackQueenside: boolean;
-};
-
-export interface LiftedPiece {
+export interface LiftedPieceStatus {
   type: 'lifted';
   piece: Piece;
   square: Square;
 }
 
-export interface Errors {
+export interface ErrorsStatus {
   type: 'errors';
   targets: Target[];
 }
 
-export type Alteration = LiftedPiece | Errors;
+export interface ReadyStatus {
+  type: 'ready';
+}
+
+export interface MovedStatus {
+  type: 'moved';
+}
+
+export type PositionStatus = LiftedPieceStatus | ErrorsStatus | ReadyStatus | MovedStatus;
 
 export type GameEnding =
   | 'checkmate'
@@ -36,13 +31,13 @@ export type GameEnding =
   | '50move_rule';
 
 interface PendingSide {
-  readonly color: SideColor;
+  readonly side: Side;
   readonly returnPlacement: PiecesPlacement;
   readonly legalMoves: readonly Move[];
 }
 
 interface TurnSide {
-  readonly color: SideColor;
+  readonly side: Side;
   readonly legalMoves: readonly Move[];
 }
 
@@ -57,30 +52,27 @@ export class ChessPosition {
   public readonly placement: PiecesPlacement;
   public readonly turnSide: TurnSide;
   public readonly pendingSide: PendingSide | null;
-  public readonly alteration: Alteration | null;
-  public readonly returned: boolean;
+  public readonly status: PositionStatus;
 
   private chess: Chess;
 
   public constructor(
     chess: Chess,
-    alteration: Alteration | null,
+    status: PositionStatus,
     turnSide: TurnSide,
     pendingSide: PendingSide | null,
-    returned = false,
   ) {
+    this.chess = chess;
     this.placement = PiecesPlacement.fromFen(chess.fen().split(' ')[0]);
-    this.alteration = alteration;
+    this.status = status;
     this.turnSide = turnSide;
     this.pendingSide = pendingSide;
-    this.returned = returned;
-    this.chess = chess;
   }
 
   public static initial(): ChessPosition {
     const chess = new Chess();
     const legalMoves = chess.moves({ verbose: true });
-    return new ChessPosition(chess, null, { color: 'w', legalMoves }, null);
+    return new ChessPosition(chess, { type: 'ready' }, { side: 'w', legalMoves }, null);
   }
 
   public toFEN(): string {
@@ -92,28 +84,28 @@ export class ChessPosition {
   }
 
   public isStarting(): boolean {
-    return this.toFEN() === STARTING_FEN && this.alteration === null;
+    return this.toFEN() === STARTING_FEN && this.status === null;
   }
 
-  public turnColor(): SideColor {
+  public turnColor(): Side {
     return this.chess.turn();
   }
 
-  public withAlteration(alteration: Alteration | null): ChessPosition {
-    return new ChessPosition(this.chess, alteration, this.turnSide, this.pendingSide);
+  public withStatus(status: PositionStatus): ChessPosition {
+    return new ChessPosition(this.chess, status, this.turnSide, this.pendingSide);
   }
 
   private liftedPiece(change: TargetChange): Piece | null {
-    if (change.from === null) {
+    if (change.before === null) {
       return null;
     }
 
-    if (change.to !== null) {
+    if (change.after !== null) {
       return null;
     }
 
-    const fromColor = change.from.color();
-    return fromColor === this.chess.turn() ? change.from : null;
+    const fromColor = change.before.side();
+    return fromColor === this.chess.turn() ? change.before : null;
   }
 
   public movesHistory(): Turn[] {
@@ -133,10 +125,10 @@ export class ChessPosition {
   public next(placement: PiecesPlacement): ChessPosition {
     const diff = this.placement.diff(placement);
 
-    if (this.alteration !== null) {
+    if (this.status.type === 'lifted' || this.status.type === 'errors') {
       if (diff.length === 0) {
         console.log('CHESS POSITION: clearing alteration');
-        return this.withAlteration(null);
+        return this.withStatus({ type: 'ready' });
       }
     }
 
@@ -150,11 +142,11 @@ export class ChessPosition {
       const liftedPiece = this.liftedPiece(change);
       if (liftedPiece === null) {
         console.log('CHESS POSITION: registering error for single change');
-        return this.withAlteration({
+        return this.withStatus({
           type: 'errors',
           targets: [
             {
-              piece: change.from,
+              piece: change.before,
               square: change.square,
             },
           ],
@@ -162,7 +154,7 @@ export class ChessPosition {
       }
 
       console.log('CHESS POSITION: registering lifted piece');
-      return this.withAlteration({
+      return this.withStatus({
         type: 'lifted',
         piece: liftedPiece,
         square: change.square,
@@ -175,13 +167,12 @@ export class ChessPosition {
         this.chess.undo();
         return new ChessPosition(
           this.chess,
-          null,
+          { type: 'ready' },
           {
-            color: this.pendingSide.color,
+            side: this.pendingSide.side,
             legalMoves: this.chess.moves({ verbose: true }),
           },
           null,
-          true,
         );
       }
 
@@ -193,9 +184,9 @@ export class ChessPosition {
           this.chess.move(move);
           return new ChessPosition(
             this.chess,
-            null,
+            { type: 'moved' },
             {
-              color: this.chess.turn(),
+              side: this.chess.turn(),
               legalMoves: this.chess.moves({ verbose: true }),
             },
             this.pendingSide,
@@ -207,11 +198,11 @@ export class ChessPosition {
     if (this.turnSide === null) {
       console.log('CHESS POSITION: no turn side available, registering errors');
       const errors: Target[] = diff.map((change) => ({
-        piece: change.from,
+        piece: change.before,
         square: change.square,
       }));
 
-      return this.withAlteration({
+      return this.withStatus({
         type: 'errors',
         targets: errors,
       });
@@ -224,13 +215,13 @@ export class ChessPosition {
         this.chess.move(move);
         return new ChessPosition(
           this.chess,
-          null,
+          { type: 'moved' },
           {
-            color: this.chess.turn(),
+            side: this.chess.turn(),
             legalMoves: this.chess.moves({ verbose: true }),
           },
           {
-            color: this.turnSide.color,
+            side: this.turnSide.side,
             returnPlacement: this.placement,
             legalMoves: this.turnSide.legalMoves,
           },
@@ -239,12 +230,12 @@ export class ChessPosition {
     }
 
     const errors: Target[] = diff.map((change) => ({
-      piece: change.from,
+      piece: change.before,
       square: change.square,
     }));
 
     console.log('CHESS POSITION: registering errors');
-    return this.withAlteration({
+    return this.withStatus({
       type: 'errors',
       targets: errors,
     });

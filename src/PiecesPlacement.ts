@@ -1,44 +1,4 @@
-export const pieceSymbols = ['P', 'N', 'B', 'R', 'Q', 'K', 'p', 'n', 'b', 'r', 'q', 'k'] as const;
-
-export type PieceSymbol = (typeof pieceSymbols)[number];
-
-export type SideColor = 'w' | 'b';
-
-export class Piece {
-  public readonly symbol: PieceSymbol;
-
-  public static readonly WP: Piece = new Piece('P');
-  public static readonly WN: Piece = new Piece('N');
-  public static readonly WB: Piece = new Piece('B');
-  public static readonly WR: Piece = new Piece('R');
-  public static readonly WQ: Piece = new Piece('Q');
-  public static readonly WK: Piece = new Piece('K');
-  public static readonly BP: Piece = new Piece('p');
-  public static readonly BN: Piece = new Piece('n');
-  public static readonly BB: Piece = new Piece('b');
-  public static readonly BR: Piece = new Piece('r');
-  public static readonly BQ: Piece = new Piece('q');
-  public static readonly BK: Piece = new Piece('k');
-
-  public constructor(symbol: PieceSymbol) {
-    this.symbol = symbol;
-  }
-
-  public static parse(symbol: string): Piece {
-    if (!pieceSymbols.includes(symbol as PieceSymbol)) {
-      throw new Error(`Invalid piece symbol: ${symbol}`);
-    }
-    return new Piece(symbol as PieceSymbol);
-  }
-
-  public color(): SideColor {
-    return this.symbol === this.symbol.toUpperCase() ? 'w' : 'b';
-  }
-
-  public toString(): string {
-    return this.symbol;
-  }
-}
+import { Piece } from './piece.js';
 
 type Pieces = (Piece | null)[];
 
@@ -66,10 +26,21 @@ export class Square {
   }
 
   public static fromAlgebraic(square: string): Square {
+    if (square.length !== 2) {
+      throw new Error('Invalid square algebraic notation');
+    }
+
     const fileChar = square[0];
     const rankChar = square[1];
     const fileIndex = fileChar.charCodeAt(0) - 'a'.charCodeAt(0);
+    if (fileIndex < 0 || fileIndex > 7) {
+      throw new Error('Invalid square algebraic notation');
+    }
+
     const rankIndex = Number.parseInt(rankChar, 10) - 1;
+    if (Number.isNaN(rankIndex) || rankIndex < 0 || rankIndex > 7) {
+      throw new Error('Invalid square algebraic notation');
+    }
     return new Square(rankIndex, fileIndex);
   }
 
@@ -106,8 +77,8 @@ export type TargetPiece = {
 
 export interface TargetChange {
   square: Square;
-  from: Piece | null;
-  to: Piece | null;
+  before: Piece | null;
+  after: Piece | null;
 }
 
 const INITIAL_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR';
@@ -126,14 +97,14 @@ export class PiecesPlacement {
   public static initial(): PiecesPlacement {
     // biome-ignore format: we want to keep this layout
     return new PiecesPlacement([
-      Piece.BR, Piece.BN, Piece.BB, Piece.BQ, Piece.BK, Piece.BB, Piece.BN, Piece.BR,
-      Piece.BP, Piece.BP, Piece.BP, Piece.BP, Piece.BP, Piece.BP, Piece.BP, Piece.BP,
+      Piece.BLACK_ROOK, Piece.BLACK_KNIGHT, Piece.BLACK_BISHOP, Piece.BLACK_QUEEN, Piece.BLACK_KING, Piece.BLACK_BISHOP, Piece.BLACK_KNIGHT, Piece.BLACK_ROOK,
+      Piece.BLACK_PAWN, Piece.BLACK_PAWN, Piece.BLACK_PAWN, Piece.BLACK_PAWN, Piece.BLACK_PAWN, Piece.BLACK_PAWN, Piece.BLACK_PAWN, Piece.BLACK_PAWN,
       null, null, null, null, null, null, null, null,
       null, null, null, null, null, null, null, null,
       null, null, null, null, null, null, null, null,
-      null, null, null, null, null, null, null, null,
-      Piece.WP, Piece.WP, Piece.WP, Piece.WP, Piece.WP, Piece.WP, Piece.WP, Piece.WP,
-      Piece.WR, Piece.WN, Piece.WB, Piece.WQ, Piece.WK, Piece.WB, Piece.WN, Piece.WR,
+      Piece.WHITE_ROOK, Piece.WHITE_KNIGHT, Piece.WHITE_BISHOP, Piece.WHITE_QUEEN, Piece.WHITE_KING, Piece.
+      WHITE_BISHOP, Piece.WHITE_KNIGHT, Piece.WHITE_ROOK,
+      Piece.WHITE_PAWN, Piece.WHITE_PAWN, Piece.WHITE_PAWN, Piece.WHITE_PAWN, Piece.WHITE_PAWN, Piece.WHITE_PAWN, Piece.WHITE_PAWN, Piece.WHITE_PAWN,
     ]);
   }
 
@@ -158,7 +129,7 @@ export class PiecesPlacement {
           const emptyCount = Number.parseInt(char, 10);
           squareIndex += emptyCount;
         } else {
-          const piece = Piece.parse(char);
+          const piece = Piece.tryParse(char);
           if (piece === null) {
             throw new Error(`Invalid FEN: invalid piece symbol '${char}'`);
           }
@@ -179,19 +150,19 @@ export class PiecesPlacement {
     return this.toFen() === INITIAL_FEN;
   }
 
-  public atIndex(index: number): Piece | null {
+  public pieceAtIndex(index: number): Piece | null {
     return this.pieces[index] ?? null;
   }
 
-  public at(square: Square): Piece | null {
-    return this.atIndex(square.index());
+  public pieceAt(square: Square): Piece | null {
+    return this.pieceAtIndex(square.index());
   }
 
-  public put(square: Square, piece: Piece | null): PiecesPlacement {
-    return this.putAtIndex(square.index(), piece);
+  public withPieceAt(square: Square, piece: Piece | null): PiecesPlacement {
+    return this.withPieceAtIndex(square.index(), piece);
   }
 
-  public putAtIndex(index: number, piece: Piece | null): PiecesPlacement {
+  public withPieceAtIndex(index: number, piece: Piece | null): PiecesPlacement {
     const newPieces = [...this.pieces];
     newPieces[index] = piece;
     return new PiecesPlacement(newPieces);
@@ -249,7 +220,7 @@ export class PiecesPlacement {
       const rankPieces: (Piece | null)[] = [];
       for (let file = 0; file < 8; file++) {
         const square = new Square(rank, file);
-        rankPieces.push(this.at(square));
+        rankPieces.push(this.pieceAt(square));
       }
       result.push(rankPieces);
     }
@@ -259,10 +230,10 @@ export class PiecesPlacement {
   public diff(other: PiecesPlacement): TargetChange[] {
     const diff: TargetChange[] = [];
     for (let i = 0; i < 64; i++) {
-      const from = this.pieces[i];
-      const to = other.pieces[i];
-      if (from?.symbol !== to?.symbol) {
-        diff.push({ square: Square.fromIndex(i), from, to });
+      const before = this.pieces[i];
+      const after = other.pieces[i];
+      if (before !== after) {
+        diff.push({ square: Square.fromIndex(i), before, after });
       }
     }
     return diff;
@@ -272,7 +243,7 @@ export class PiecesPlacement {
     for (let i = 0; i < 64; i++) {
       const pieceA = this.pieces[i];
       const pieceB = other.pieces[i];
-      if (pieceA?.symbol !== pieceB?.symbol) {
+      if (pieceA !== pieceB) {
         return false;
       }
     }
