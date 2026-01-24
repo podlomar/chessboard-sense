@@ -1,6 +1,7 @@
 import type { ChessPosition } from './ChessPosition.js';
-import type { PiecesPlacement, Square } from './PiecesPlacement.js';
+import type { PiecesPlacement } from './PiecesPlacement.js';
 import type { Piece } from './piece.js';
+import type { Square } from './square.js';
 
 const circumflex = (piece: Piece): string => {
   switch (piece.symbol) {
@@ -108,7 +109,7 @@ export class AsciiBoard {
   }
 
   public setPiece(square: Square, piece: Piece, accent: Accent = 'none'): void {
-    const index = square.index();
+    const index = square.index;
     if (accent === 'circumflex') {
       this.board[index] = circumflex(piece);
     } else if (accent === 'diaeresis') {
@@ -119,7 +120,7 @@ export class AsciiBoard {
   }
 
   public clearSquare(square: Square, accent: 'diaeresis' | 'none' = 'none'): void {
-    const index = square.index();
+    const index = square.index;
     if (accent === 'diaeresis') {
       this.board[index] = '̤ ';
     } else {

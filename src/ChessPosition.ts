@@ -1,6 +1,7 @@
 import { Chess, type Move } from 'chess.js';
-import { PiecesPlacement, type Square, type Target, type TargetChange } from './PiecesPlacement.js';
+import { PiecesPlacement, type Target, type TargetChange } from './PiecesPlacement.js';
 import type { Piece, Side } from './piece.js';
+import type { Square } from './square.js';
 
 export interface LiftedPieceStatus {
   type: 'lifted';

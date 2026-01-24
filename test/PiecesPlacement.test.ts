@@ -31,7 +31,7 @@ describe('PiecesPlacement', () => {
 
   describe('initial()', () => {
     it('should create the standard chess starting position', () => {
-      const placement = PiecesPlacement.initial();
+      const placement = PiecesPlacement.starting();
 
       // Check white pieces (rank 1)
       expect(placement.pieceAt('a1')).to.equal('R');
@@ -139,7 +139,7 @@ describe('PiecesPlacement', () => {
 
   describe('at() and atIndex()', () => {
     it('should get piece at algebraic notation', () => {
-      const placement = PiecesPlacement.initial();
+      const placement = PiecesPlacement.starting();
 
       expect(placement.pieceAt('e1')).to.equal('K');
       expect(placement.pieceAt('e8')).to.equal('k');
@@ -148,7 +148,7 @@ describe('PiecesPlacement', () => {
     });
 
     it('should get piece at index', () => {
-      const placement = PiecesPlacement.initial();
+      const placement = PiecesPlacement.starting();
 
       // Index 0 is a8
       expect(placement.pieceAtIndex(0)).to.equal('r');
@@ -161,7 +161,7 @@ describe('PiecesPlacement', () => {
     });
 
     it('should return null for empty squares', () => {
-      const placement = PiecesPlacement.initial();
+      const placement = PiecesPlacement.starting();
 
       expect(placement.pieceAt('e4')).to.be.null;
       expect(placement.pieceAt('d5')).to.be.null;
@@ -179,7 +179,7 @@ describe('PiecesPlacement', () => {
     });
 
     it('should create new placement with piece replaced', () => {
-      const initial = PiecesPlacement.initial();
+      const initial = PiecesPlacement.starting();
       const modified = initial.withPieceAt('e2', 'Q');
 
       expect(modified.pieceAt('e2')).to.equal('Q');
@@ -187,7 +187,7 @@ describe('PiecesPlacement', () => {
     });
 
     it('should create new placement with piece removed', () => {
-      const initial = PiecesPlacement.initial();
+      const initial = PiecesPlacement.starting();
       const modified = initial.withPieceAt('e2', null);
 
       expect(modified.pieceAt('e2')).to.be.null;
@@ -240,7 +240,7 @@ describe('PiecesPlacement', () => {
     });
 
     it('should replace existing rank', () => {
-      const initial = PiecesPlacement.initial();
+      const initial = PiecesPlacement.starting();
       const modified = initial.putRank(2, [null, null, null, null, null, null, null, null]);
 
       // Rank 2 should be empty
@@ -302,7 +302,7 @@ describe('PiecesPlacement', () => {
 
   describe('toFen()', () => {
     it('should convert initial position to FEN', () => {
-      const placement = PiecesPlacement.initial();
+      const placement = PiecesPlacement.starting();
       const fen = placement.toFen();
 
       expect(fen).to.equal('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR');
@@ -316,7 +316,7 @@ describe('PiecesPlacement', () => {
     });
 
     it('should convert position after e4 to FEN', () => {
-      const placement = PiecesPlacement.initial().withPieceAt('e2', null).withPieceAt('e4', 'P');
+      const placement = PiecesPlacement.starting().withPieceAt('e2', null).withPieceAt('e4', 'P');
       const fen = placement.toFen();
 
       expect(fen).to.equal('rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR');
@@ -437,7 +437,7 @@ describe('PiecesPlacement', () => {
 
   describe('toString()', () => {
     it('should display the board as ASCII art', () => {
-      const placement = PiecesPlacement.initial();
+      const placement = PiecesPlacement.starting();
       const str = placement.toAscii();
 
       expect(str).to.include('r n b q k b n r   8');

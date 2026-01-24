@@ -1,69 +1,7 @@
 import { Piece } from './piece.js';
+import { Square } from './square.js';
 
 type Pieces = (Piece | null)[];
-
-export class Square {
-  public readonly rankIndex: number;
-  public readonly fileIndex: number;
-
-  public constructor(rankIndex: number, fileIndex: number) {
-    this.rankIndex = rankIndex;
-    this.fileIndex = fileIndex;
-  }
-
-  public equals(other: Square): boolean {
-    return this.rankIndex === other.rankIndex && this.fileIndex === other.fileIndex;
-  }
-
-  public index(): number {
-    return (7 - this.rankIndex) * 8 + this.fileIndex;
-  }
-
-  public algebraic(): string {
-    const fileChar = String.fromCharCode('a'.charCodeAt(0) + this.fileIndex);
-    const rankChar = (this.rankIndex + 1).toString();
-    return `${fileChar}${rankChar}`;
-  }
-
-  public static fromAlgebraic(square: string): Square {
-    if (square.length !== 2) {
-      throw new Error('Invalid square algebraic notation');
-    }
-
-    const fileChar = square[0];
-    const rankChar = square[1];
-    const fileIndex = fileChar.charCodeAt(0) - 'a'.charCodeAt(0);
-    if (fileIndex < 0 || fileIndex > 7) {
-      throw new Error('Invalid square algebraic notation');
-    }
-
-    const rankIndex = Number.parseInt(rankChar, 10) - 1;
-    if (Number.isNaN(rankIndex) || rankIndex < 0 || rankIndex > 7) {
-      throw new Error('Invalid square algebraic notation');
-    }
-    return new Square(rankIndex, fileIndex);
-  }
-
-  public static parseAlgebraic(square: string): Square | null {
-    if (square.length !== 2) {
-      return null;
-    }
-    const fileChar = square[0];
-    const rankChar = square[1];
-    const fileIndex = fileChar.charCodeAt(0) - 'a'.charCodeAt(0);
-    const rankIndex = Number.parseInt(rankChar, 10) - 1;
-    if (fileIndex < 0 || fileIndex > 7 || rankIndex < 0 || rankIndex > 7) {
-      return null;
-    }
-    return new Square(rankIndex, fileIndex);
-  }
-
-  public static fromIndex(index: number): Square {
-    const rankIndex = 7 - Math.floor(index / 8);
-    const fileIndex = index % 8;
-    return new Square(rankIndex, fileIndex);
-  }
-}
 
 export type Target = {
   piece: Piece | null;
@@ -81,7 +19,79 @@ export interface TargetChange {
   after: Piece | null;
 }
 
-const INITIAL_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR';
+const STARTING_PIECES: Pieces = [
+  Piece.BLACK_ROOK,
+  Piece.BLACK_KNIGHT,
+  Piece.BLACK_BISHOP,
+  Piece.BLACK_QUEEN,
+  Piece.BLACK_KING,
+  Piece.BLACK_BISHOP,
+  Piece.BLACK_KNIGHT,
+
+  Piece.BLACK_ROOK,
+  Piece.BLACK_PAWN,
+  Piece.BLACK_PAWN,
+  Piece.BLACK_PAWN,
+  Piece.BLACK_PAWN,
+  Piece.BLACK_PAWN,
+  Piece.BLACK_PAWN,
+  Piece.BLACK_PAWN,
+  Piece.BLACK_PAWN,
+
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+
+  Piece.WHITE_PAWN,
+  Piece.WHITE_PAWN,
+  Piece.WHITE_PAWN,
+  Piece.WHITE_PAWN,
+  Piece.WHITE_PAWN,
+  Piece.WHITE_PAWN,
+  Piece.WHITE_PAWN,
+  Piece.WHITE_PAWN,
+
+  Piece.WHITE_ROOK,
+  Piece.WHITE_KNIGHT,
+  Piece.WHITE_BISHOP,
+  Piece.WHITE_QUEEN,
+  Piece.WHITE_KING,
+  Piece.WHITE_BISHOP,
+  Piece.WHITE_KNIGHT,
+  Piece.WHITE_ROOK,
+] as const;
 
 export class PiecesPlacement {
   public readonly pieces: Readonly<Pieces>;
@@ -94,18 +104,8 @@ export class PiecesPlacement {
     return new PiecesPlacement(new Array(64).fill(null));
   }
 
-  public static initial(): PiecesPlacement {
-    // biome-ignore format: we want to keep this layout
-    return new PiecesPlacement([
-      Piece.BLACK_ROOK, Piece.BLACK_KNIGHT, Piece.BLACK_BISHOP, Piece.BLACK_QUEEN, Piece.BLACK_KING, Piece.BLACK_BISHOP, Piece.BLACK_KNIGHT, Piece.BLACK_ROOK,
-      Piece.BLACK_PAWN, Piece.BLACK_PAWN, Piece.BLACK_PAWN, Piece.BLACK_PAWN, Piece.BLACK_PAWN, Piece.BLACK_PAWN, Piece.BLACK_PAWN, Piece.BLACK_PAWN,
-      null, null, null, null, null, null, null, null,
-      null, null, null, null, null, null, null, null,
-      null, null, null, null, null, null, null, null,
-      Piece.WHITE_ROOK, Piece.WHITE_KNIGHT, Piece.WHITE_BISHOP, Piece.WHITE_QUEEN, Piece.WHITE_KING, Piece.
-      WHITE_BISHOP, Piece.WHITE_KNIGHT, Piece.WHITE_ROOK,
-      Piece.WHITE_PAWN, Piece.WHITE_PAWN, Piece.WHITE_PAWN, Piece.WHITE_PAWN, Piece.WHITE_PAWN, Piece.WHITE_PAWN, Piece.WHITE_PAWN, Piece.WHITE_PAWN,
-    ]);
+  public static starting(): PiecesPlacement {
+    return new PiecesPlacement(STARTING_PIECES);
   }
 
   public static fromFen(fen: string): PiecesPlacement {
@@ -146,8 +146,14 @@ export class PiecesPlacement {
     return new PiecesPlacement(pieces);
   }
 
-  public isInitial(): boolean {
-    return this.toFen() === INITIAL_FEN;
+  public isStarting(): boolean {
+    for (let i = 0; i < 64; i++) {
+      if (this.pieces[i] !== STARTING_PIECES[i]) {
+        console.log(i, this.pieces[i], STARTING_PIECES[i]);
+        return false;
+      }
+    }
+    return true;
   }
 
   public pieceAtIndex(index: number): Piece | null {
@@ -155,11 +161,11 @@ export class PiecesPlacement {
   }
 
   public pieceAt(square: Square): Piece | null {
-    return this.pieceAtIndex(square.index());
+    return this.pieceAtIndex(square.index);
   }
 
   public withPieceAt(square: Square, piece: Piece | null): PiecesPlacement {
-    return this.withPieceAtIndex(square.index(), piece);
+    return this.withPieceAtIndex(square.index, piece);
   }
 
   public withPieceAtIndex(index: number, piece: Piece | null): PiecesPlacement {
@@ -184,31 +190,31 @@ export class PiecesPlacement {
 
   public toFen(): string {
     const ranks: string[] = [];
-    for (let rank = 7; rank >= 0; rank--) {
-      let rankStr = '';
-      let emptyCount = 0;
+    let rankStr = '';
+    let emptyCount = 0;
 
-      for (let file = 0; file < 8; file++) {
-        const square = new Square(rank, file);
-        const squareIndex = square.index();
-        const piece = this.pieces[squareIndex];
+    for (let i = 0; i < 64; i++) {
+      const piece = this.pieces[i];
 
-        if (piece === null) {
-          emptyCount++;
-        } else {
-          if (emptyCount > 0) {
-            rankStr += emptyCount.toString();
-            emptyCount = 0;
-          }
-          rankStr += piece;
+      if (piece === null) {
+        emptyCount++;
+      } else {
+        if (emptyCount > 0) {
+          rankStr += emptyCount.toString();
+          emptyCount = 0;
         }
+        rankStr += piece;
       }
 
-      if (emptyCount > 0) {
-        rankStr += emptyCount.toString();
+      // End of rank (every 8 squares)
+      if (i % 8 === 7) {
+        if (emptyCount > 0) {
+          rankStr += emptyCount.toString();
+          emptyCount = 0;
+        }
+        ranks.push(rankStr);
+        rankStr = '';
       }
-
-      ranks.push(rankStr);
     }
 
     return ranks.join('/');
@@ -216,20 +222,15 @@ export class PiecesPlacement {
 
   public ranks(): (Piece | null)[][] {
     const result: (Piece | null)[][] = [];
-    for (let rank = 7; rank >= 0; rank--) {
-      const rankPieces: (Piece | null)[] = [];
-      for (let file = 0; file < 8; file++) {
-        const square = new Square(rank, file);
-        rankPieces.push(this.pieceAt(square));
-      }
-      result.push(rankPieces);
+    for (let i = 0; i < 64; i += 8) {
+      result.push([...this.pieces.slice(i, i + 8)]);
     }
     return result;
   }
 
-  public diff(other: PiecesPlacement): TargetChange[] {
+  public diff(other: PiecesPlacement, limit = 64): TargetChange[] {
     const diff: TargetChange[] = [];
-    for (let i = 0; i < 64; i++) {
+    for (let i = 0; i < 64 && diff.length < limit; i++) {
       const before = this.pieces[i];
       const after = other.pieces[i];
       if (before !== after) {
@@ -240,13 +241,6 @@ export class PiecesPlacement {
   }
 
   public equals(other: PiecesPlacement): boolean {
-    for (let i = 0; i < 64; i++) {
-      const pieceA = this.pieces[i];
-      const pieceB = other.pieces[i];
-      if (pieceA !== pieceB) {
-        return false;
-      }
-    }
-    return true;
+    return this.diff(other, 1).length === 0;
   }
 }
