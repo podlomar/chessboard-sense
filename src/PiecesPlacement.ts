@@ -156,6 +156,15 @@ export class PiecesPlacement {
     return true;
   }
 
+  public isEmpty(): boolean {
+    for (let i = 0; i < 64; i++) {
+      if (this.pieces[i] !== null) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   public pieceAtIndex(index: number): Piece | null {
     return this.pieces[index] ?? null;
   }
