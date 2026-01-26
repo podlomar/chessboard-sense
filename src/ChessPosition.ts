@@ -109,6 +109,45 @@ export class ChessPosition {
     return fromColor === this.chess.turn() ? change.before : null;
   }
 
+  public canTakeBack(): boolean {
+    return (
+      this.chess.history().length > 0 &&
+      this.status.type !== 'lifted' &&
+      this.status.type !== 'errors'
+    );
+  }
+
+  public takeBack(): ChessPosition | null {
+    if (!this.canTakeBack()) {
+      return null;
+    }
+
+    const undone = this.chess.undo();
+    if (undone === null) {
+      return null;
+    }
+
+    const placement = PiecesPlacement.fromFen(undone.before.split(' ')[0]);
+
+    const diff = placement.diff(this.placement);
+    const legalMoves = this.chess.moves({ verbose: true });
+    return new ChessPosition(
+      this.chess,
+      {
+        type: 'errors',
+        targets: diff.map((change) => ({
+          piece: change.before,
+          square: change.square,
+        })),
+      },
+      {
+        side: this.chess.turn(),
+        legalMoves,
+      },
+      null,
+    );
+  }
+
   public movesHistory(): Turn[] {
     const turns: Turn[] = [];
     const history = this.chess.history({ verbose: true });
